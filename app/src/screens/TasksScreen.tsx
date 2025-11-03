@@ -121,7 +121,7 @@ export default function TasksScreen() {
           ) : archivedTasks.length === 0 ? (
             <Text style={styles.archiveEmpty}>No archived tasks</Text>
           ) : (
-            <View style={styles.archiveList}>
+            <ScrollView style={styles.archiveList}>
               {archivedTasks.map((task) => (
                 <View key={task.id} style={styles.taskItem}>
                   <View style={styles.taskContent}>
@@ -139,7 +139,7 @@ export default function TasksScreen() {
                   </TouchableOpacity>
                 </View>
               ))}
-            </View>
+            </ScrollView>
           )}
         </View>
       )}
@@ -272,9 +272,10 @@ const styles = StyleSheet.create({
     marginTop: 8,
     paddingHorizontal: 20,
     paddingBottom: 12,
+    maxHeight: 300,
   },
   archiveList: {
-    // Avoid flex:1 to prevent zero-height inside ScrollView
+    flex: 1,
   },
   archiveTitle: {
     fontSize: 20,

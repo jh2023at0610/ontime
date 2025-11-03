@@ -5,13 +5,24 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
+    "platforms": ["ios", "android"],
     "splash": {
       "backgroundColor": "#ffffff"
     },
     "ios": {
       "supportsTablet": true
     },
-    "android": {
+    "android": {},
+    "extra": {
+      "eas": {
+        "projectId": "19aaeac6-6575-4fb9-b9d8-ea6aee046dfd"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/19aaeac6-6575-4fb9-b9d8-ea6aee046dfd"
     }
   }
 }
