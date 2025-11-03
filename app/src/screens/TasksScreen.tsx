@@ -272,10 +272,9 @@ const styles = StyleSheet.create({
     marginTop: 8,
     paddingHorizontal: 20,
     paddingBottom: 12,
-    maxHeight: 300,
   },
   archiveList: {
-    flex: 1,
+    maxHeight: 300,
   },
   archiveTitle: {
     fontSize: 20,
