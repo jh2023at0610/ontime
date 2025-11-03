@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Supabase Connection</title>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <h1>Supabase Test</h1>
+    <button onclick="testConnection()">Test Connection</button>
+    <div id="result"></div>
+
+    <script>
+        const SUPABASE_URL = 'https://xnulxcngoynyzzadyhhp.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhudWx4Y25nb3lueXp6YWR5aGhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE1ODUzMzIsImV4cCI6MjA3NzE2MTMzMn0.IdEVut4BwtoQXo4nB54axBxeVbu4SzOZpAgMA2HZrF8';
+
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        async function testConnection() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Testing...';
+
+            try {
+                const { data, error } = await supabase
+                    .from('tasks')
+                    .select('*');
+
+                if (error) {
+                    resultDiv.innerHTML = '❌ Error: ' + error.message;
+                } else {
+                    resultDiv.innerHTML = '✅ Connected! Found ' + data.length + ' tasks:<br><pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                }
+            } catch (err) {
+                resultDiv.innerHTML = '❌ Error: ' + err.message;
+            }
+        }
+    </script>
+</body>
+</html>
+
+
