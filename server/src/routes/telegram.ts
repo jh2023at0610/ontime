@@ -6,16 +6,21 @@ const router = express.Router();
 
 // Middleware to verify webhook secret
 function verifyWebhookSecret(req: express.Request, res: express.Response, next: express.NextFunction) {
-  const secret = req.headers['x-telegram-bot-api-secret-token'];
+  // Check both query parameter and header for secret
+  const secretFromQuery = req.query.secret as string;
+  const secretFromHeader = req.headers['x-telegram-bot-api-secret-token'];
   
   // Allow requests without secret for development
   if (!TELEGRAM_WEBHOOK_SECRET) {
     return next();
   }
   
-  // Verify secret matches
-  if (secret !== TELEGRAM_WEBHOOK_SECRET) {
+  // Verify secret matches (check both query and header)
+  if (secretFromQuery !== TELEGRAM_WEBHOOK_SECRET && secretFromHeader !== TELEGRAM_WEBHOOK_SECRET) {
     console.log('⚠️  Webhook secret mismatch');
+    console.log('Expected:', TELEGRAM_WEBHOOK_SECRET);
+    console.log('Got from query:', secretFromQuery);
+    console.log('Got from header:', secretFromHeader);
     return res.status(403).json({ error: 'Forbidden' });
   }
   
