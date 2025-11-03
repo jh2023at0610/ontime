@@ -120,7 +120,7 @@ export default function TasksScreen() {
                 <Text style={[styles.taskText, task.completed && styles.taskTextCompleted]}>
                   {task.text}
                 </Text>
-                <Text style={styles.taskSource}>{task.source === 'telegram' ? '📱' : '➕'}</Text>
+                <Text style={styles.taskSource}>{task.source === 'telegram' ? '✈️' : '➕'}</Text>
               </TouchableOpacity>
               
               <TouchableOpacity
@@ -170,7 +170,7 @@ export default function TasksScreen() {
                     <Text style={[styles.taskText, styles.taskTextCompleted]}>
                       {task.text}
                     </Text>
-                    <Text style={styles.taskSource}>{task.source === 'telegram' ? '📱' : '➕'}</Text>
+                    <Text style={styles.taskSource}>{task.source === 'telegram' ? '✈️' : '➕'}</Text>
                   </View>
                   <TouchableOpacity
                     style={styles.deleteButton}
