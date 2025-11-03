@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetchTasks, updateTask, deleteTask, Task, fetchArchivedTasks, archiveCompletedTasks } from '../services/supabase';
+import { fetchTasks, updateTask, deleteTask, Task, fetchArchivedTasks, archiveCompletedTasks, createTask } from '../services/supabase';
 
 export default function TasksScreen() {
   const queryClient = useQueryClient();
   const [showArchive, setShowArchive] = useState(false);
+  const [newTaskText, setNewTaskText] = useState('');
   
   // Fetch tasks from Supabase
   const { data: tasks = [], isLoading } = useQuery({
@@ -47,6 +48,22 @@ export default function TasksScreen() {
     },
   });
 
+  // Add new task
+  const addTask = useMutation({
+    mutationFn: createTask,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      setNewTaskText(''); // Clear input after adding
+    },
+  });
+
+  const handleAddTask = () => {
+    const trimmedText = newTaskText.trim();
+    if (trimmedText) {
+      addTask.mutate(trimmedText);
+    }
+  };
+
   if (isLoading) {
     return (
       <View style={styles.centerContainer}>
@@ -57,8 +74,32 @@ export default function TasksScreen() {
   }
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView 
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
       <Text style={styles.title}>My Tasks</Text>
+      
+      {/* Add Task Input */}
+      <View style={styles.addTaskContainer}>
+        <TextInput
+          style={styles.input}
+          placeholder="Add a new task..."
+          value={newTaskText}
+          onChangeText={setNewTaskText}
+          onSubmitEditing={handleAddTask}
+          returnKeyType="done"
+        />
+        <TouchableOpacity 
+          style={[styles.addButton, !newTaskText.trim() && styles.addButtonDisabled]}
+          onPress={handleAddTask}
+          disabled={!newTaskText.trim() || addTask.isPending}
+        >
+          <Text style={styles.addButtonText}>
+            {addTask.isPending ? '...' : '➕'}
+          </Text>
+        </TouchableOpacity>
+      </View>
       
       <ScrollView style={styles.tasksList}>
         {tasks.length === 0 ? (
@@ -147,7 +188,7 @@ export default function TasksScreen() {
       <Text style={styles.footer}>
         {tasks.length} {tasks.length === 1 ? 'task' : 'tasks'}
       </Text>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -167,7 +208,39 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: 'bold',
     padding: 20,
+    paddingBottom: 12,
     color: '#333',
+  },
+  addTaskContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 20,
+    paddingBottom: 16,
+    gap: 8,
+  },
+  input: {
+    flex: 1,
+    backgroundColor: '#fff',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 8,
+    fontSize: 16,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  addButton: {
+    backgroundColor: '#6366f1',
+    width: 48,
+    height: 48,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  addButtonDisabled: {
+    backgroundColor: '#cbd5e1',
+  },
+  addButtonText: {
+    fontSize: 24,
+    color: '#fff',
   },
   loadingText: {
     marginTop: 12,
