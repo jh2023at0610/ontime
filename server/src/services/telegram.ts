@@ -25,6 +25,8 @@ interface TelegramUpdate {
     text?: string;
     voice?: {
       file_id: string;
+      duration?: number;
+      file_size?: number;
     };
     message_id: number;
     chat: {
@@ -242,12 +244,13 @@ async function transcribeVoice(audioBuffer: Buffer): Promise<string> {
           }
           
           // Close previous stream if it exists
-          if (fileStream) {
+          if (fileStream !== null && fileStream !== undefined) {
             try {
-              fileStream.destroy();
+              (fileStream as fs.ReadStream).destroy();
             } catch (e) {
               // Ignore errors closing stream
             }
+            fileStream = null;
           }
           
           // Re-create file stream for retry (fresh stream)
@@ -303,7 +306,7 @@ async function transcribeVoice(audioBuffer: Buffer): Promise<string> {
     throw error;
   } finally {
     // Clean up file stream
-    if (fileStream) {
+    if (fileStream !== null) {
       try {
         fileStream.destroy();
       } catch (e) {
