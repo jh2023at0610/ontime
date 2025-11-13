@@ -91,9 +91,33 @@ export default function TasksScreen() {
       });
 
       console.log('🎤 Starting recording..');
-      const { recording: newRecording } = await Audio.Recording.createAsync(
-        Audio.RecordingOptionsPresets.HIGH_QUALITY
-      );
+      // Use iOS-compatible format that Whisper accepts
+      const { recording: newRecording } = await Audio.Recording.createAsync({
+        isMeteringEnabled: true,
+        android: {
+          extension: '.m4a',
+          outputFormat: Audio.AndroidOutputFormat.MPEG_4,
+          audioEncoder: Audio.AndroidAudioEncoder.AAC,
+          sampleRate: 44100,
+          numberOfChannels: 2,
+          bitRate: 128000,
+        },
+        ios: {
+          extension: '.wav',
+          outputFormat: Audio.IOSOutputFormat.LINEARPCM,
+          audioQuality: Audio.IOSAudioQuality.HIGH,
+          sampleRate: 44100,
+          numberOfChannels: 1,
+          bitRate: 128000,
+          linearPCMBitDepth: 16,
+          linearPCMIsBigEndian: false,
+          linearPCMIsFloat: false,
+        },
+        web: {
+          mimeType: 'audio/webm',
+          bitsPerSecond: 128000,
+        },
+      });
       
       setRecording(newRecording);
       setIsRecording(true);
@@ -148,11 +172,11 @@ export default function TasksScreen() {
       const formData = new FormData();
       
       // For Expo, we need to append the file properly
-      // iOS records in CAF/M4A, but we'll tell the server it's MP4 (which Whisper accepts)
+      // iOS now records as WAV, which Whisper definitely supports
       formData.append('audio', {
         uri: audioUri,
-        type: 'audio/mp4',
-        name: 'recording.mp4',
+        type: 'audio/wav',
+        name: 'recording.wav',
       } as any);
 
       console.log('🚀 Making request to:', `${SERVER_URL}/app/transcribe`);
