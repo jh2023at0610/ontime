@@ -148,11 +148,11 @@ export default function TasksScreen() {
       const formData = new FormData();
       
       // For Expo, we need to append the file properly
-      // Just pass the URI directly - React Native handles it
+      // iOS records in CAF/M4A, but we'll tell the server it's MP4 (which Whisper accepts)
       formData.append('audio', {
         uri: audioUri,
-        type: 'audio/m4a',
-        name: 'recording.m4a',
+        type: 'audio/mp4',
+        name: 'recording.mp4',
       } as any);
 
       console.log('🚀 Making request to:', `${SERVER_URL}/app/transcribe`);
