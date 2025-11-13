@@ -4,9 +4,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchTasks, updateTask, deleteTask, Task, fetchArchivedTasks, archiveCompletedTasks, createTask } from '../services/supabase';
 import { Audio } from 'expo-av';
 
-const SERVER_URL = process.env.EXPO_PUBLIC_SERVER_URL || 'http://localhost:3000';
+// Temporarily hardcoded for testing - will use env var later
+const SERVER_URL = 'https://ontime-27yy.onrender.com';
 
 console.log('🌐 Server URL configured:', SERVER_URL);
+console.log('🔍 ENV check:', process.env.EXPO_PUBLIC_SERVER_URL);
 
 export default function TasksScreen() {
   const queryClient = useQueryClient();
