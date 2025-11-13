@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, TextInput, KeyboardAvoidingView, Platform, Alert } from 'react-native';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tantml:react-query';
 import { fetchTasks, updateTask, deleteTask, Task, fetchArchivedTasks, archiveCompletedTasks, createTask } from '../services/supabase';
 import { Audio } from 'expo-av';
-import * as FileSystem from 'expo-file-system';
 
 const SERVER_URL = process.env.EXPO_PUBLIC_SERVER_URL || 'http://localhost:3000';
 
@@ -142,13 +141,8 @@ export default function TasksScreen() {
       // Create form data
       const formData = new FormData();
       
-      // Read file as base64 and create blob
-      const fileInfo = await FileSystem.getInfoAsync(audioUri);
-      if (!fileInfo.exists) {
-        throw new Error('Audio file not found');
-      }
-
       // For Expo, we need to append the file properly
+      // Just pass the URI directly - React Native handles it
       formData.append('audio', {
         uri: audioUri,
         type: 'audio/m4a',
