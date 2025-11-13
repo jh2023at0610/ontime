@@ -1,12 +1,19 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, TextInput, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchTasks, updateTask, deleteTask, Task, fetchArchivedTasks, archiveCompletedTasks, createTask } from '../services/supabase';
+import { Audio } from 'expo-av';
+import * as FileSystem from 'expo-file-system';
+
+const SERVER_URL = process.env.EXPO_PUBLIC_SERVER_URL || 'http://localhost:3000';
 
 export default function TasksScreen() {
   const queryClient = useQueryClient();
   const [showArchive, setShowArchive] = useState(false);
   const [newTaskText, setNewTaskText] = useState('');
+  const [recording, setRecording] = useState<Audio.Recording | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
   
   // Fetch tasks from Supabase
   const { data: tasks = [], isLoading } = useQuery({
@@ -64,6 +71,119 @@ export default function TasksScreen() {
     }
   };
 
+  // Start recording audio
+  async function startRecording() {
+    try {
+      console.log('🎤 Requesting permissions..');
+      const permission = await Audio.requestPermissionsAsync();
+      
+      if (!permission.granted) {
+        Alert.alert('Permission Required', 'Please grant microphone permission to record voice notes');
+        return;
+      }
+
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: true,
+        playsInSilentModeIOS: true,
+      });
+
+      console.log('🎤 Starting recording..');
+      const { recording: newRecording } = await Audio.Recording.createAsync(
+        Audio.RecordingOptionsPresets.HIGH_QUALITY
+      );
+      
+      setRecording(newRecording);
+      setIsRecording(true);
+      console.log('🎤 Recording started');
+    } catch (err) {
+      console.error('Failed to start recording', err);
+      Alert.alert('Error', 'Failed to start recording');
+    }
+  }
+
+  // Stop recording and transcribe
+  async function stopRecording() {
+    if (!recording) return;
+
+    try {
+      console.log('🛑 Stopping recording..');
+      setIsRecording(false);
+      await recording.stopAndUnloadAsync();
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: false,
+      });
+      
+      const uri = recording.getURI();
+      setRecording(null);
+      
+      if (!uri) {
+        Alert.alert('Error', 'No audio recorded');
+        return;
+      }
+
+      console.log('📁 Recording saved to', uri);
+      
+      // Upload and transcribe
+      setIsTranscribing(true);
+      await uploadAndTranscribe(uri);
+      
+    } catch (err) {
+      console.error('Failed to stop recording', err);
+      Alert.alert('Error', 'Failed to process recording');
+      setIsTranscribing(false);
+    }
+  }
+
+  // Upload audio to server and get transcription
+  async function uploadAndTranscribe(audioUri: string) {
+    try {
+      console.log('📤 Uploading audio to server...');
+      
+      // Create form data
+      const formData = new FormData();
+      
+      // Read file as base64 and create blob
+      const fileInfo = await FileSystem.getInfoAsync(audioUri);
+      if (!fileInfo.exists) {
+        throw new Error('Audio file not found');
+      }
+
+      // For Expo, we need to append the file properly
+      formData.append('audio', {
+        uri: audioUri,
+        type: 'audio/m4a',
+        name: 'recording.m4a',
+      } as any);
+
+      const response = await fetch(`${SERVER_URL}/app/transcribe`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Transcription failed');
+      }
+
+      const data = await response.json();
+      console.log('✅ Transcription received:', data.transcription);
+      
+      // Set the transcribed text in the input field
+      setNewTaskText(data.transcription);
+      setIsTranscribing(false);
+      
+      Alert.alert('Success', 'Voice note transcribed! You can edit before adding.');
+      
+    } catch (err: any) {
+      console.error('Failed to upload/transcribe', err);
+      Alert.alert('Error', `Transcription failed: ${err.message}`);
+      setIsTranscribing(false);
+    }
+  }
+
   if (isLoading) {
     return (
       <View style={styles.centerContainer}>
@@ -89,17 +209,34 @@ export default function TasksScreen() {
           onChangeText={setNewTaskText}
           onSubmitEditing={handleAddTask}
           returnKeyType="done"
+          editable={!isTranscribing}
         />
+        <TouchableOpacity 
+          style={[styles.micButton, isRecording && styles.micButtonRecording]}
+          onPress={isRecording ? stopRecording : startRecording}
+          disabled={isTranscribing}
+        >
+          <Text style={styles.micButtonText}>
+            {isTranscribing ? '⏳' : isRecording ? '⏹' : '🎤'}
+          </Text>
+        </TouchableOpacity>
         <TouchableOpacity 
           style={[styles.addButton, !newTaskText.trim() && styles.addButtonDisabled]}
           onPress={handleAddTask}
-          disabled={!newTaskText.trim() || addTask.isPending}
+          disabled={!newTaskText.trim() || addTask.isPending || isTranscribing}
         >
           <Text style={styles.addButtonText}>
             {addTask.isPending ? '...' : '➕'}
           </Text>
         </TouchableOpacity>
       </View>
+      
+      {isTranscribing && (
+        <View style={styles.transcribingContainer}>
+          <ActivityIndicator size="small" color="#6366f1" />
+          <Text style={styles.transcribingText}>Transcribing your voice...</Text>
+        </View>
+      )}
       
       <ScrollView style={styles.tasksList}>
         {tasks.length === 0 ? (
@@ -227,6 +364,20 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e5e7eb',
   },
+  micButton: {
+    backgroundColor: '#ef4444',
+    width: 48,
+    height: 48,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  micButtonRecording: {
+    backgroundColor: '#dc2626',
+  },
+  micButtonText: {
+    fontSize: 24,
+  },
   addButton: {
     backgroundColor: '#6366f1',
     width: 48,
@@ -241,6 +392,19 @@ const styles = StyleSheet.create({
   addButtonText: {
     fontSize: 24,
     color: '#fff',
+  },
+  transcribingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+    paddingBottom: 8,
+    gap: 8,
+  },
+  transcribingText: {
+    fontSize: 14,
+    color: '#6366f1',
+    fontWeight: '500',
   },
   loadingText: {
     marginTop: 12,

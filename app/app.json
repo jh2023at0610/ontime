@@ -10,9 +10,14 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "This app needs access to the microphone to record voice notes for tasks."
+      }
     },
-    "android": {},
+    "android": {
+      "permissions": ["RECORD_AUDIO"]
+    },
     "extra": {
       "eas": {
         "projectId": "19aaeac6-6575-4fb9-b9d8-ea6aee046dfd"
