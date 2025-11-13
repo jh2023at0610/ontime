@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import telegramRoutes from './routes/telegram';
+import appRoutes from './routes/app';
 
 dotenv.config();
 
@@ -14,6 +15,7 @@ app.use(express.json());
 
 // Routes
 app.use('/telegram', telegramRoutes);
+app.use('/app', appRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

@@ -98,8 +98,8 @@ async function downloadVoiceFile(fileId: string): Promise<Buffer> {
   }
 }
 
-// Transcribe voice using OpenAI Whisper
-async function transcribeVoice(audioBuffer: Buffer): Promise<string> {
+// Transcribe voice using OpenAI Whisper (exported for use by app API)
+export async function transcribeVoice(audioBuffer: Buffer): Promise<string> {
   console.log(`📊 Audio size: ${audioBuffer.length} bytes`);
   
   // Validate API key exists
