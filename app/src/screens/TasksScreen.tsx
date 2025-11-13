@@ -6,6 +6,8 @@ import { Audio } from 'expo-av';
 
 const SERVER_URL = process.env.EXPO_PUBLIC_SERVER_URL || 'http://localhost:3000';
 
+console.log('🌐 Server URL configured:', SERVER_URL);
+
 export default function TasksScreen() {
   const queryClient = useQueryClient();
   const [showArchive, setShowArchive] = useState(false);
@@ -137,6 +139,8 @@ export default function TasksScreen() {
   async function uploadAndTranscribe(audioUri: string) {
     try {
       console.log('📤 Uploading audio to server...');
+      console.log('🔗 Server URL:', SERVER_URL);
+      console.log('🎵 Audio URI:', audioUri);
       
       // Create form data
       const formData = new FormData();
@@ -149,6 +153,8 @@ export default function TasksScreen() {
         name: 'recording.m4a',
       } as any);
 
+      console.log('🚀 Making request to:', `${SERVER_URL}/app/transcribe`);
+      
       const response = await fetch(`${SERVER_URL}/app/transcribe`, {
         method: 'POST',
         body: formData,
@@ -157,8 +163,12 @@ export default function TasksScreen() {
         },
       });
 
+      console.log('📥 Response status:', response.status);
+      console.log('📥 Response ok:', response.ok);
+
       if (!response.ok) {
         const error = await response.json();
+        console.error('❌ Server error:', error);
         throw new Error(error.message || 'Transcription failed');
       }
 
